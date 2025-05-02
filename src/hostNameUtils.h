@@ -5,16 +5,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
     #include <windows.h>
     #include <direct.h>
     #define PATH_SEPARATOR '\\'
     #define MKDIR(path) _mkdir(path)
+    #define CLEAR "cls"
+    #define GET_HOME() (getenv("USERPROFILE"))
 #else
     #include <unistd.h>
     #include <sys/stat.h>
     #define PATH_SEPARATOR '/'
     #define MKDIR(path) mkdir(path, 0700)
+    #define CLEAR "clear"
+    #define GET_HOME() (getenv("HOME"))
 #endif
 
 int get_computer_name(char *buffer, size_t size);
