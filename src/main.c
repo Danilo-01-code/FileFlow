@@ -23,7 +23,8 @@ int main(void){
     get_config_path(path, sizeof(path));
 
     if (get_username(username, sizeof(username), path) != 0) {
-        return 1;  //Error to obtain or save username
+        printf("Cannot obtain or save your username.\n");
+        return 1;  
     }
 
     system(CLEAR);
@@ -36,6 +37,7 @@ int main(void){
     while(1){   
         printf(BRED "%s@" BGREEN "%s> " RESET, username, hostname);
         fgets(userInput,sizeof(userInput),stdin);
+        //TODO
     }
 
     return 0;
