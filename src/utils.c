@@ -13,9 +13,14 @@ void ensure_config_dir_exists(const char *path) {
 }
 
 char **split(char *sentence){ 
+    size_t len = strlen(sentence);
+    if (len > 0 && sentence[len - 1] == '\n') {
+        sentence[len - 1] = '\0';
+    }
+
     // This function considers that the sentence arg is a mutable string, like: char sentence[]
     int size = count_words(sentence);
-    char **tokens = malloc(size * sizeof(char*));
+    char **tokens = malloc((size+1) * sizeof(char*));
     int token_idx = 0;
     char *token = strtok(sentence, " ");
     
@@ -23,17 +28,31 @@ char **split(char *sentence){
         tokens[token_idx++] = strdup(token);
         token = strtok(NULL," ");
     }
+
+    tokens[token_idx] = NULL; // Terminator
     return tokens;
 }
 
 int count_words(char *sentence){ 
-    int res = 1; // For the first word, this considers that there is no space before the first word
+    int idx = 0;
+    while (sentence[idx] == ' '){   
+        idx++;
+    }
+    int res = 1;
     int len = strlen(sentence);
 
-    for (int i = 0; i < len;i++){   
-        if (sentence[i] == ' ' && i < len - 1 && sentence[i+1] != ' '){    
+    for (idx; idx < len; idx++){   
+        if (sentence[idx] == ' ' && idx < len - 1 && sentence[idx+1] != ' '){    
             res++;
         }
     }
     return res;
+}
+
+int count_args(char **args) {
+    int count = 0;
+    while (args[count] != NULL) {
+        count++;
+    }
+    return count;
 }

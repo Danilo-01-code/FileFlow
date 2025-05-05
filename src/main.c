@@ -1,10 +1,11 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
 #include "../includes/defs.h"
 #include "hostNameUtils.h"
+#include "tokenizer.h"
 #include "utils.h"
 
 void showWelcome(void);
@@ -16,10 +17,11 @@ int main(void){
     char path[512];
     char username[100];
 
-    if (!(get_computer_name(hostname, sizeof(hostname)) == 0)) {
+    if (get_computer_name(hostname, sizeof(hostname)) != 0) {
         printf("Cannot obtain the computer name\n");
         return 1;
     } 
+
     get_config_path(path, sizeof(path));
 
     if (get_username(username, sizeof(username), path) != 0) {
@@ -32,12 +34,13 @@ int main(void){
     if (isFirstRunToday()) {
         showWelcome();
     }
+
     char userInput[256];
     
     while(1){   
-        printf(BRED "%s@" BGREEN "%s> " RESET, username, hostname);
+        printf(BRED "%s @ " BGREEN "%s> " RESET, username, hostname);
         fgets(userInput,sizeof(userInput),stdin);
-        //TODO
+        processInput(userInput);
     }
 
     return 0;
@@ -79,7 +82,7 @@ void showWelcome(void){
         "╔════════════════════════════════════════════════════════════╗\n"
         "║                      Welcome to FileFlow                  ║\n"
         "╚════════════════════════════════════════════════════════════╝\n" RESET);
-    printf(BGREEN"        Your file organization and automation assistant.\n"RESET);
+    printf(BGREEN"     Your file backup and automation assistant.\n"RESET);
     printf("\n* Type help to see all available commands.\n");
     printf("* For more information, check: /docs or README.md\n");
     printf("This message is show one time per day.\n\n");
