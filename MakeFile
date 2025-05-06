@@ -1,2 +1,0 @@
-gcc main.c utils.c tokenizer.c hostNameUtils.c commands.c -o main
-//TODO

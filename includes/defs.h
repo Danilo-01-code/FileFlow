@@ -9,5 +9,9 @@
 #define BOLD "\033[1m"
 #define BRED   "\033[1;31m"   
 #define BGREEN "\033[1;32m"
+#define GREEN  "\033[32m"
+
+#define VERSION 1.0
+#define CHUNK 16384  // 16KB
 
 #endif

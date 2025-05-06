@@ -20,8 +20,8 @@ void freeTokens(char** tokens){
     free(tokens);
 }
 
-void processInput(char userInput[]){
-    char **tokens = split(userInput);
+void processInput(char userInput[], size_t length){
+    char **tokens = split(userInput, length);
 
     if (tokens[0] == NULL) {
         return; 
@@ -30,6 +30,9 @@ void processInput(char userInput[]){
     Command commands[] = {
         {"help", handle_help},
         {"exit", handle_exit},
+        {"version", handle_version},
+        {"cmp", handle_compress},
+        {"dcmp", handle_decompress},
         {NULL, NULL} 
     };
 

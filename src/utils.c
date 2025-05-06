@@ -12,15 +12,14 @@ void ensure_config_dir_exists(const char *path) {
     MKDIR(dir_path); 
 }
 
-char **split(char *sentence){ 
-    size_t len = strlen(sentence);
-    if (len > 0 && sentence[len - 1] == '\n') {
-        sentence[len - 1] = '\0';
+char **split(char *sentence, size_t wordLen){ 
+    size_t totalLen = strlen(sentence);
+    if (totalLen > 0 && sentence[totalLen - 1] == '\n') {
+        sentence[totalLen - 1] = '\0';
     }
 
     // This function considers that the sentence arg is a mutable string, like: char sentence[]
-    int size = count_words(sentence);
-    char **tokens = malloc((size+1) * sizeof(char*));
+    char **tokens = malloc((wordLen+1) * sizeof(char*));
     int token_idx = 0;
     char *token = strtok(sentence, " ");
     
@@ -33,12 +32,16 @@ char **split(char *sentence){
     return tokens;
 }
 
-int count_words(char *sentence){ 
+size_t count_words(char *sentence){ 
     int idx = 0;
     while (sentence[idx] == ' '){   
         idx++;
     }
-    int res = 1;
+
+    if (strlen(sentence) == 0){ 
+        return 0;
+    }
+    size_t res = 1;
     int len = strlen(sentence);
 
     for (idx; idx < len; idx++){   

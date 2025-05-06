@@ -1,3 +1,14 @@
+/*
+* FileFlow - main.c
+* Author: Danilo Kepler
+* Created 2025-05-01
+* Version: 1.0
+*
+* Description:
+*     Entry-point For FileFlow utility, handles username, hostname
+*     and creates an REPL for fileFlow commands. 
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +51,10 @@ int main(void){
     while(1){   
         printf(BRED "%s @ " BGREEN "%s> " RESET, username, hostname);
         fgets(userInput,sizeof(userInput),stdin);
-        processInput(userInput);
+        size_t length = count_words(userInput);
+        if (length > 0){
+            processInput(userInput, length);      
+        }
     }
 
     return 0;
@@ -82,7 +96,7 @@ void showWelcome(void){
         "╔════════════════════════════════════════════════════════════╗\n"
         "║                      Welcome to FileFlow                  ║\n"
         "╚════════════════════════════════════════════════════════════╝\n" RESET);
-    printf(BGREEN"     Your file backup and automation assistant.\n"RESET);
+    printf(BGREEN"           Your file automation assistant.\n"RESET);
     printf("\n* Type help to see all available commands.\n");
     printf("* For more information, check: /docs or README.md\n");
     printf("This message is show one time per day.\n\n");
