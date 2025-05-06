@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+
 #include "utils.h"
 #include "hostNameUtils.h"
 
@@ -58,4 +60,27 @@ int count_args(char **args) {
         count++;
     }
     return count;
+}
+
+int dir_exists(const char *path) {
+    struct stat st;
+    return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+}
+
+int create_dir(const char *path) {
+    char tmp[1024];
+    snprintf(tmp, sizeof(tmp), "%s", path);
+    size_t len = strlen(tmp);
+
+    if (tmp[len - 1] == '/')
+        tmp[len - 1] = '\0';
+
+    for (char *p = tmp + 1; *p; p++) {
+        if (*p == '/') {
+            *p = '\0';
+            MKDIR(tmp);
+            *p = '/';
+        }
+    }
+    return MKDIR(tmp);
 }

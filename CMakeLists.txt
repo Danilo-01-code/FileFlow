@@ -4,7 +4,6 @@ project(FileFlow)
 set(CMAKE_C_STANDARD 11)
 set(SRC_DIR src)
 
-# Tente encontrar Minizip
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(MINIZIP REQUIRED minizip)
 

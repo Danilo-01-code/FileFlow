@@ -33,6 +33,8 @@ void processInput(char userInput[], size_t length){
         {"version", handle_version},
         {"cmp", handle_compress},
         {"dcmp", handle_decompress},
+        {"clear", handle_clear},
+        {"curr", handle_curr_directory},
         {NULL, NULL} 
     };
 

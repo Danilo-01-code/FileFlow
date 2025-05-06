@@ -7,6 +7,8 @@ void handle_exit(char **args, int argc);
 void handle_compress(char **args, int argc);
 void handle_decompress(char **args, int argc);
 void handle_version(char **args, int argc);
+void handle_clear(char **args, int argc);
+void handle_curr_directory(char **args, int argc);
 void _handle_too_many_args(char **args,int argc);
 
 #endif 
