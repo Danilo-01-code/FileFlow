@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/stat.h>
+#include <errno.h>
 
 #include "utils.h"
 #include "hostNameUtils.h"
@@ -83,4 +85,21 @@ int create_dir(const char *path) {
         }
     }
     return MKDIR(tmp);
+}
+
+char *ensure_zip_extension(const char *filename){
+    size_t len = strlen(filename);
+    
+    if (len >= 4 && strcmp(filename + len - 4, ".zip") == 0) {
+        return strdup(filename); 
+    }
+
+    char *new_name = malloc(len + 5); 
+    if (!new_name) {
+        fprintf(stderr, "Cannot allocate memory\n");
+        exit(1);
+    }
+
+    sprintf(new_name, "%s.zip", filename);
+    return new_name;
 }

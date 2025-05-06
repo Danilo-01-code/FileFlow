@@ -35,6 +35,8 @@ void processInput(char userInput[], size_t length){
         {"dcmp", handle_decompress},
         {"clear", handle_clear},
         {"curr", handle_curr_directory},
+        {"arc", handle_architecture},
+        {"name", handle_name},
         {NULL, NULL} 
     };
 

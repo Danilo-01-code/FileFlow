@@ -4,10 +4,19 @@
 #include "../includes/defs.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#if defined(_WIN64) || defined(__x86_64__) || defined(__ppc64) || defined(__aarch64__)
+    #define ARC "64 bits"
+#else
+    #define ARC "32 bits"
+#endif
 
 #if defined(_WIN32) || defined(_WIN64)
     #include <windows.h>
     #include <direct.h>
+
+    #define NAME "Windows"
     #define PATH_SEPARATOR '\\'
     #define MKDIR(path) _mkdir(path)
     #define CLEAR "cls"
@@ -28,6 +37,15 @@
 #else
     #include <unistd.h>
     #include <sys/stat.h>
+    #include <sys/types.h>
+
+    #if defined(__APPLE__) && defined(__MACH__)
+        #define NAME "macOS"
+    #else
+        #define NAME "Linux"
+    #endif
+
+    #define NAME "Linux"
     #define PATH_SEPARATOR '/'
     #define MKDIR(path) mkdir(path, 0700)
     #define CLEAR "clear"

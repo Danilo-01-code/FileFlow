@@ -21,12 +21,14 @@ void handle_help(char **args, int argc){
         return;
     }
     printf(GREEN "These are some FileFlow commands:\n\n" RESET);
-    printf("  cmp <input_path> <output_path>     Compresses the file at <input_path> and saves on the directory <output_path>\n");
-    printf("  dcmp <input_path> <output_path>    Decompresses the ZIP file at <input_path> to <output_path>\n");
-    printf("  version                            See the current Version\n");
-    printf("  clear                              Clear the REPL");
-    printf("  curr                               see the current directory");
-    printf("  exit                               Exit the system\n\n");
+    printf("  cmp <input_path> <output_path> <new_file_name>   Compresses the file at <input_path> and saves on <output_path>\n");
+    printf("  dcmp <input_path> <output_path> <new_file_name>  Decompresses the ZIP file at <input_path> to <output_path>\n\n");
+    printf("  version             See the current Version\n");
+    printf("  clear               Clear the REPL\n");
+    printf("  curr                see the current directory\n");
+    printf("  arc                 See your computer architecture (64 or 32 bits)\n");
+    printf("  name                Your current OS name\n");
+    printf("  exit                Exit the system\n\n");
 }
 
 void handle_unknown(char *arg){
@@ -43,24 +45,39 @@ void handle_exit(char **args, int argc){
 }
 
 void handle_compress(char **args, int argc){    
-    if (argc != 2) {
-        printf("Usage: cmp <input_path> <output_path>\n");
+    if (argc != 2 && argc != 3) {
+        printf("Usage: cmp <input_path> <output_path> <compress_file_name>\n");
         return;
     }
 
     const char *in_file = args[0];
-    const char *out_dir = args[1];
+    char *out_dir = args[1];
+    char *out_name;
+    int needsFree = 0;
+
+    if (argc == 3){  
+        out_name = ensure_zip_extension(args[2]);
+        needsFree = 1;
+    }
+    else{   
+        out_name = "out.zip";
+    }
 
     char zip_path[1024];
-    snprintf(zip_path, sizeof(zip_path), "%s/out.zip", out_dir);
+    snprintf(zip_path, sizeof(zip_path), "%s/%s", out_dir, out_name);
 
     if (!dir_exists(out_dir)) {
-        printf(YELLOW "Directory do not found. trying to create: %s\n" RESET, out_dir);
-        if (create_dir(out_dir) != 0) {
-            fprintf(stderr, RED "Cannot crete the dir: %s\n" RESET, out_dir);
-            return;
+        if (strcmp(out_dir, ".") == 0){    
+            out_dir = _get_cwd();
         }
-        printf(GREEN "Directory created successfully!\n" RESET);
+        else{   
+            printf(YELLOW "Directory do not found. trying to create: %s\n" RESET, out_dir);
+
+            if (create_dir(out_dir) != 0) {
+                return;
+            }
+            printf(GREEN "Directory created successfully!\n" RESET);
+        }
     }
     
     zipFile zf = zipOpen(zip_path, APPEND_STATUS_CREATE);
@@ -96,6 +113,9 @@ void handle_compress(char **args, int argc){
     zipClose(zf, NULL);
 
     printf(GREEN "Zip file created @:" RESET "%s\n", zip_path);
+    if(needsFree){  
+        free(out_name);
+    }
 }
 
 void handle_decompress(char **args, int argc){  
@@ -115,11 +135,30 @@ void handle_clear(char **args, int argc){
         _handle_too_many_args(args,argc);
         return;
     }
-
     system(CLEAR);
 }
 
-void handle_curr_directory(char **args, int argc){  
+void handle_curr_directory(char **args, int argc){
+    if (argc != 0){ 
+        _handle_too_many_args(args,argc);
+        return;
+    }  
     char * curr = _get_cwd();
-    printf("%s", curr);
+    printf("%s\n", curr);
+}
+
+void handle_architecture(char **args,int argc){ 
+    if (argc != 0){ 
+        _handle_too_many_args(args,argc);
+        return;
+    }
+    printf("%s\n", ARC);
+}
+
+void handle_name(char **args, int argc){  
+    if (argc != 0){ 
+        _handle_too_many_args(args,argc);
+        return;
+    }  
+    printf("%s\n", NAME);
 }
