@@ -25,6 +25,7 @@ void handle_help(char **args, int argc){
     printf("  dcmp <input_path> <output_path>    Decompresses the ZIP file at <input_path> to <output_path>\n");
     printf("  version                            See the current Version\n");
     printf("  clear                              Clear the REPL");
+    printf("  curr                               see the current directory");
     printf("  exit                               Exit the system\n\n");
 }
 
@@ -119,6 +120,6 @@ void handle_clear(char **args, int argc){
 }
 
 void handle_curr_directory(char **args, int argc){  
-    //TODO
-    return;
+    char * curr = _get_cwd();
+    printf("%s", curr);
 }
