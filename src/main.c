@@ -51,6 +51,7 @@ int main(void){
     while(1){   
         printf(BRED "%s @ " BGREEN "%s> " RESET, username, hostname);
         fgets(userInput,sizeof(userInput),stdin);
+        
         size_t length = count_words(userInput);
         if (length > 0){
             processInput(userInput, length);      
