@@ -5,6 +5,3 @@ cmake ..
 make
 ./FileFlow
 ```
-
-^[[A  
-^[[B   

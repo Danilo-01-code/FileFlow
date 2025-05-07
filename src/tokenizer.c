@@ -37,6 +37,7 @@ void processInput(char userInput[], size_t length){
         {"curr", handle_curr_directory},
         {"arc", handle_architecture},
         {"name", handle_name},
+        {"mv", handle_move},
         {NULL, NULL} 
     };
 

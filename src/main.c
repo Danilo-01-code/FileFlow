@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 #include "../includes/defs.h"
 #include "hostNameUtils.h"
@@ -49,13 +51,19 @@ int main(void){
     char userInput[256];
     
     while(1){   
-        printf(BRED "%s @ " BGREEN "%s> " RESET, username, hostname);
-        fgets(userInput,sizeof(userInput),stdin);
-        
-        size_t length = count_words(userInput);
-        if (length > 0){
-            processInput(userInput, length);      
+        char prompt[1146];
+        snprintf(prompt, sizeof(prompt), BRED "%s @ " BGREEN "%s> " RESET, username, hostname);
+        char *userInput = readline(prompt);
+    
+        if (*userInput) {
+            add_history(userInput);
+            size_t length = count_words(userInput);
+            if (length > 0) {
+                processInput(userInput, length);
+            }
         }
+    
+        free(userInput); 
     }
 
     return 0;

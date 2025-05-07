@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
 #include <minizip/zip.h>
 #include <minizip/unzip.h>
 
@@ -16,6 +19,27 @@ void _handle_too_many_args(char **args, int argc){
     printf(RED"\n are not recognizable\n"RESET);
 }
 
+void _handle_copy(const char *in_dir, const char *out_dir){    
+    FILE *in_file = fopen(in_dir, "rb");
+    FILE *out_file =  fopen(out_dir, "wb");
+
+    if (!in_file || !out_file) {
+        perror("Cannot oppen the Files");
+        return;
+    }
+    
+    char buffer[4096];
+    size_t bytes;
+    while ((bytes = fread(buffer, 1, sizeof(buffer), in_file)) > 0) {
+        fwrite(buffer, 1, bytes, out_file);
+    }
+
+    fclose(in_file);
+    fclose(out_file);
+
+    printf(GREEN ">> Copied: \"%s\" → \"%s\"\n" RESET, in_dir, out_dir);
+}
+
 void handle_help(char **args, int argc){
     if (argc != 0){ 
         _handle_too_many_args(args,argc);
@@ -24,6 +48,8 @@ void handle_help(char **args, int argc){
     printf(GREEN "These are some FileFlow commands:\n\n" RESET);
     printf("  cmp <input_path> <output_path> <new_file_name>   Compresses the file at <input_path> and saves on <output_path>\n");
     printf("  dcmp <input_path> <output_path>                  Decompresses the ZIP file at <input_path> to <output_path>\n\n");
+    printf("  mv <input_path> <output_path> -c | -x            Copy (-c flag) or Cut (-x flag) the files of a guiven \n<input_file> to an <output_file>\n");
+    printf("      -c : Copy mode (the original files remain in place)\n -x : Cut mode (the original files are removed after transfer)\n");
     printf("  version             See the current Version\n");
     printf("  clear               Clear the REPL\n");
     printf("  curr                see the current directory\n");
@@ -80,7 +106,7 @@ void handle_compress(char **args, int argc){
             printf(GREEN "Directory created successfully!\n" RESET);
         }
     }
-    
+
     zipFile zf = zipOpen(zip_path, APPEND_STATUS_CREATE);
     if (!zf) {
         fprintf(stderr, RED "Cannot create the zip File: %s\n" RESET, zip_path);
@@ -125,16 +151,14 @@ void handle_decompress(char **args, int argc){
         return;
     }
 
-    char* in_file = args[0];
+    unzFile zip_input = unzOpen(args[0]);
     char* out_dir = args[1];
 
-    unzFile zip_input = unzOpen(in_file);
     if (!zip_input) {
         printf(RED "Cannot open the zip file.\n" RESET);
-        free(in_file);
         return;
     }
-    
+
     do {
         char filename[256];
         unz_file_info info;
@@ -234,4 +258,52 @@ void handle_name(char **args, int argc){
         return;
     }  
     printf("%s\n", NAME);
+}
+
+void _handle_move_dir(const char *in_file, const char *out_file){
+    DIR *in_dir = opendir(in_file);
+    if (!in_dir) {
+        if (strcmp(in_file, ".") == 0) { // Avoid infinite copying 
+            perror("Cannot Copy files of the FileFlow executable dir");
+            return;
+        }
+        perror("Cannot open the  input directory");
+        return;
+    }
+
+    if (!dir_exists(out_file)){
+        if (strcmp(out_file, ".") == 0) {
+            out_file = _get_cwd();
+        }
+        create_dir(out_file);
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(in_dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            continue;
+
+        char src[1024], dst[1024];
+        snprintf(src, sizeof(src), "%s/%s", in_file, entry->d_name);
+        snprintf(dst, sizeof(dst), "%s/%s", out_file, entry->d_name);
+
+        struct stat st;
+        stat(src, &st);
+        if (S_ISDIR(st.st_mode)) {
+            if (!dir_exists(dst)) create_dir(dst);
+            _handle_move_dir(src,dst);
+        } else if (S_ISREG(st.st_mode)) {
+            _handle_copy(src, dst);
+        }
+    }
+
+    closedir(in_dir);
+}
+
+void handle_move(char **args, int argc){
+    if (argc != 2) {
+        printf("Usage: mv <input_dir> <output_dir>\n");
+        return;
+    }
+    _handle_move_dir(args[0], args[1]);
 }
