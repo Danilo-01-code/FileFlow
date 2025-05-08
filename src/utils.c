@@ -103,3 +103,51 @@ char *ensure_zip_extension(const char *filename){
     sprintf(new_name, "%s.zip", filename);
     return new_name;
 }
+
+char* make_absolute_dir(const char *path) {
+    if (!path) return NULL;
+    char *abs_path = NULL;
+    char *cwd = _get_curr();
+    if (!cwd) return NULL;
+
+    if (path[0] == '/') { // Already absolute
+        abs_path = strdup(path);
+    } else if (strcmp(path, ".") == 0) {
+        abs_path = strdup(cwd);
+    } else {
+        size_t n = strlen(cwd) + 1 + strlen(path) + 1;
+        abs_path = malloc(n);
+        if (abs_path) snprintf(abs_path, n, "%s/%s", cwd, path);
+    }
+    if (!abs_path) return NULL;
+
+    struct stat st;
+    if (stat(abs_path, &st) != 0) {
+        if (mkdir(abs_path, 0755) != 0) {
+            perror("Failed to create directory");
+            free(abs_path);
+            return NULL;
+        }
+    } else if (!S_ISDIR(st.st_mode)) {
+        fprintf(stderr, "Path exists but is not a directory: %s\n", abs_path);
+        free(abs_path);
+        return NULL;
+    }
+    return abs_path;
+}
+
+char* make_absolute_file(const char *path) {
+    if (!path) return NULL;
+    char *abs_path = NULL;
+    char *cwd = _get_curr();
+    if (!cwd) return NULL;
+
+    if (path[0] == '/') {
+        abs_path = strdup(path);
+    } else {
+        size_t n = strlen(cwd) + 1 + strlen(path) + 1;
+        abs_path = malloc(n);
+        if (abs_path) snprintf(abs_path, n, "%s/%s", cwd, path);
+    }
+    return abs_path;
+}

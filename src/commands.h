@@ -13,7 +13,7 @@ void _handle_too_many_args(char **args,int argc);
 void handle_architecture(char **args,int argc);
 void handle_name(char **args, int argc);
 void handle_move(char **args, int argc);
-void _handle_move_dir(const char *in_file, const char *out_file);
-void _handle_copy(char *in_dir, char *out_dir);
+void _handle_move_dir(const char *in_file, const char *out_file, int copy);
+void _handle_copy(char *in_dir, char *out_dir, int copy);
 
 #endif 

@@ -19,37 +19,16 @@ void _handle_too_many_args(char **args, int argc){
     printf(RED"\n are not recognizable\n"RESET);
 }
 
-void _handle_copy(const char *in_dir, const char *out_dir){    
-    FILE *in_file = fopen(in_dir, "rb");
-    FILE *out_file =  fopen(out_dir, "wb");
-
-    if (!in_file || !out_file) {
-        perror("Cannot oppen the Files");
-        return;
-    }
-    
-    char buffer[4096];
-    size_t bytes;
-    while ((bytes = fread(buffer, 1, sizeof(buffer), in_file)) > 0) {
-        fwrite(buffer, 1, bytes, out_file);
-    }
-
-    fclose(in_file);
-    fclose(out_file);
-
-    printf(GREEN ">> Copied: \"%s\" → \"%s\"\n" RESET, in_dir, out_dir);
-}
-
 void handle_help(char **args, int argc){
     if (argc != 0){ 
         _handle_too_many_args(args,argc);
         return;
     }
     printf(GREEN "These are some FileFlow commands:\n\n" RESET);
-    printf("  cmp <input_path> <output_path> <new_file_name>   Compresses the file at <input_path> and saves on <output_path>\n");
-    printf("  dcmp <input_path> <output_path>                  Decompresses the ZIP file at <input_path> to <output_path>\n\n");
+    printf("  cmp <input_path> <output_path>          Compresses the file at <input_path> and saves on <output_path>\n");
+    printf("  dcmp <input_path> <output_path>         Decompresses the ZIP file at <input_path> to <output_path>\n");
     printf("  mv <input_path> <output_path> -c | -x            Copy (-c flag) or Cut (-x flag) the files of a guiven \n<input_file> to an <output_file>\n");
-    printf("      -c : Copy mode (the original files remain in place)\n -x : Cut mode (the original files are removed after transfer)\n");
+    printf("      -c : Copy mode (the original files remain in place)\n      -x : Cut mode (the original files are removed after transfer)\n\n");
     printf("  version             See the current Version\n");
     printf("  clear               Clear the REPL\n");
     printf("  curr                see the current directory\n");
@@ -72,57 +51,41 @@ void handle_exit(char **args, int argc){
 }
 
 void handle_compress(char **args, int argc){    
-    if (argc != 2 && argc != 3) {
-        printf("Usage: cmp <input_path> <output_path> <new_file_name>\n");
+    if (argc != 2) {
+        printf("Usage: cmp <input_path> <output_path> \n");
         return;
     }
 
-    const char *in_file = args[0];
-    char *out_dir = args[1];
-    char *out_file;
-    int needs_free = 0;
+    const char *in_file  = make_absolute_file(args[0]);
+    const char *out_dir = make_absolute_dir(args[1]);
 
-    if (argc == 3){  
-        out_file = ensure_zip_extension(args[2]);
-        needs_free = 1;
-    }
-    else{   
-        out_file = "out.zip";
+    if (!in_file || !out_dir) {
+        fprintf(stderr, RED "Failed to resolve absolute paths\n" RESET);
+        return;
     }
 
-    char zip_path[1024];
-    snprintf(zip_path, sizeof(zip_path), "%s/%s", out_dir, out_file);
+    const char *filename = strrchr(in_file, '/');
+    filename = filename ? filename + 1 : in_file;
 
-    if (!dir_exists(out_dir)) {       
-        if (strcmp(out_dir, ".") == 0){    
-            out_dir = _get_cwd();
-        }
-        else{
-            printf(YELLOW "Directory do not found. trying to create: %s\n" RESET, out_dir);
+    // Create the .zip: "name.txt" → "name.txt.zip"
+    char zip_name[512];
+    snprintf(zip_name, sizeof(zip_name), "%s.zip", filename);
 
-            if (create_dir(out_dir) != 0) {
-                return;
-            }
-            printf(GREEN "Directory created successfully!\n" RESET);
-        }
-    }
+    char zip_path[ABS_PATH_MAX];
+    snprintf(zip_path, sizeof(zip_path), "%s/%s", out_dir, zip_name);
 
     zipFile zf = zipOpen(zip_path, APPEND_STATUS_CREATE);
     if (!zf) {
-        fprintf(stderr, RED "Cannot create the zip File: %s\n" RESET, zip_path);
+        fprintf(stderr, RED "Cannot create zip file: %s\n" RESET, zip_path);
         return;
     }
 
     FILE *fp = fopen(in_file, "rb");
     if (!fp) {
-        fprintf(stderr, RED "Cannot open the File on the input:\n" RESET "%s\n", in_file);
+        fprintf(stderr, RED "Cannot open input file: %s\n" RESET, in_file);
         zipClose(zf, NULL);
         return;
     }
-
-    const char *filename = strrchr(in_file, '/');
-    if (!filename) filename = in_file;
-    else filename++;
 
     zip_fileinfo zi = {0};
     zipOpenNewFileInZip(zf, filename, &zi,
@@ -138,73 +101,72 @@ void handle_compress(char **args, int argc){
     fclose(fp);
     zipCloseFileInZip(zf);
     zipClose(zf, NULL);
-
-    printf(GREEN "Zip file created @:" RESET "%s\n", zip_path);
-    if(needs_free){  
-        free(out_file);
-    }
+    printf(GREEN "Zip file created From: " RESET "%s" GREEN " to: " RESET "%s\n",in_file, out_dir);
 }
 
 void handle_decompress(char **args, int argc){  
     if (argc != 2) {
-        printf("Usage: cmp <input_path> <output_path>\n");
+        printf("Usage: dcmp <input_path> <output_path>\n");
         return;
     }
 
-    unzFile zip_input = unzOpen(args[0]);
-    char* out_dir = args[1];
+    const char *in_zip  = make_absolute_file(args[0]);
+    char       *out_dir = make_absolute_dir(args[1]);
 
+    unzFile zip_input = unzOpen(in_zip);
     if (!zip_input) {
-        printf(RED "Cannot open the zip file.\n" RESET);
+        fprintf(stderr, RED "Cannot open zip file: %s\n" RESET "Verify if your put the '.zip' on the input\n", in_zip);
         return;
     }
 
     do {
-        char filename[256];
+        char filename[512];
         unz_file_info info;
-        if (unzGetCurrentFileInfo(zip_input, &info, filename, sizeof(filename), NULL, 0, NULL, 0) != UNZ_OK) {
+
+        if (unzGetCurrentFileInfo(zip_input, &info,
+                                 filename, sizeof(filename),
+                                 NULL, 0, NULL, 0) != UNZ_OK) {
             break;
         }
 
         size_t fn_len = strlen(filename);
         if (fn_len > 0 && filename[fn_len - 1] == '/') {
-            char dir_path[512];
+            char dir_path[1536];
             snprintf(dir_path, sizeof(dir_path), "%s/%s", out_dir, filename);
             create_dir(dir_path);
             continue;
         }
 
-        // Create parent dir
-        char full_path[512];
+        char full_path[1536];
         snprintf(full_path, sizeof(full_path), "%s/%s", out_dir, filename);
 
-        if (strcmp(out_dir, ".") == 0) {
-            out_dir = _get_cwd();
-        }
-
-        char parent[512];
-        strcpy(parent, full_path);
-        char *p = strrchr(parent, '/');
-        if (p) {
-            *p = '\0';
+        char parent[1024];
+        strncpy(parent, full_path, sizeof(parent));
+        char *slash = strrchr(parent, '/');
+        if (slash) {
+            *slash = '\0';
             create_dir(parent);
         }
 
-        // Extract
         if (unzOpenCurrentFile(zip_input) != UNZ_OK) {
-            printf(RED "Failed to open entry: %s\n" RESET, filename);
+            fprintf(stderr, RED "Failed to open entry: %s\n" RESET, filename);
             break;
         }
 
         FILE *out = fopen(full_path, "wb");
         if (!out) {
-            printf(RED "Failed to create file: %s\n" RESET, full_path);
+            fprintf(stderr, RED "Failed to create file: %s\n" RESET, full_path);
+            
+            if (full_path[0] == '/'){ 
+                fprintf(stderr, RED "Do not use slash '/' if you isnt accessing a directory from the root: %s\n" RESET, full_path);
+            }
+
             unzCloseCurrentFile(zip_input);
             break;
         }
 
         char buffer[8192];
-        int bytes;
+        int  bytes;
         while ((bytes = unzReadCurrentFile(zip_input, buffer, sizeof(buffer))) > 0) {
             fwrite(buffer, 1, bytes, out);
         }
@@ -212,7 +174,7 @@ void handle_decompress(char **args, int argc){
         fclose(out);
         unzCloseCurrentFile(zip_input);
 
-        printf(GREEN "Extracted @: %s\n" RESET, full_path);
+        printf(GREEN "Extracted from:"RESET " %s " GREEN "to:" RESET "%s\n",in_zip, full_path);
 
     } while (unzGoToNextFile(zip_input) == UNZ_OK);
 
@@ -240,7 +202,7 @@ void handle_curr_directory(char **args, int argc){
         _handle_too_many_args(args,argc);
         return;
     }  
-    char * curr = _get_cwd();
+    char * curr = _get_curr();
     printf("%s\n", curr);
 }
 
@@ -260,50 +222,87 @@ void handle_name(char **args, int argc){
     printf("%s\n", NAME);
 }
 
-void _handle_move_dir(const char *in_file, const char *out_file){
-    DIR *in_dir = opendir(in_file);
-    if (!in_dir) {
-        if (strcmp(in_file, ".") == 0) { // Avoid infinite copying 
-            perror("Cannot Copy files of the FileFlow executable dir");
-            return;
-        }
-        perror("Cannot open the  input directory");
+void _handle_copy(const char *in_file, const char *out_file, int move_flag) {
+    FILE *in_fp = fopen(in_file, "rb");
+    FILE *out_fp = fopen(out_file, "wb");
+
+    if (!in_fp || !out_fp) {
+        fprintf(stderr, RED "Cannot open files" RESET);
+        if (in_fp) fclose(in_fp);
+        if (out_fp) fclose(out_fp);
         return;
     }
 
-    if (!dir_exists(out_file)){
-        if (strcmp(out_file, ".") == 0) {
-            out_file = _get_cwd();
-        }
-        create_dir(out_file);
+    char buf[4096]; size_t r;
+    while ((r = fread(buf, 1, sizeof(buf), in_fp)) > 0) fwrite(buf,1,r,out_fp);
+    fclose(in_fp); fclose(out_fp);
+
+    if (!move_flag) {
+        if (remove(in_file) == 0)
+            printf("Moved: %s -> %s\n", in_file, out_file);
+        else fprintf(stderr, RED"Failed to remove original" RESET);
+    } else {
+        printf(GREEN "Copied: " RESET "%s" GREEN "->" RESET "%s\n", in_file, out_file);
     }
-
-    struct dirent *entry;
-    while ((entry = readdir(in_dir)) != NULL) {
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
-            continue;
-
-        char src[1024], dst[1024];
-        snprintf(src, sizeof(src), "%s/%s", in_file, entry->d_name);
-        snprintf(dst, sizeof(dst), "%s/%s", out_file, entry->d_name);
-
-        struct stat st;
-        stat(src, &st);
-        if (S_ISDIR(st.st_mode)) {
-            if (!dir_exists(dst)) create_dir(dst);
-            _handle_move_dir(src,dst);
-        } else if (S_ISREG(st.st_mode)) {
-            _handle_copy(src, dst);
-        }
-    }
-
-    closedir(in_dir);
 }
 
-void handle_move(char **args, int argc){
-    if (argc != 2) {
-        printf("Usage: mv <input_dir> <output_dir>\n");
+void _handle_move_dir(const char *in_dir, const char *out_dir, int move_flag) {
+    char *abs_in = make_absolute_dir(in_dir);
+    char *abs_out = make_absolute_dir(out_dir);
+
+    if (!abs_in || !abs_out) {
+        free(abs_in);
+        free(abs_out);
         return;
     }
-    _handle_move_dir(args[0], args[1]);
+
+    DIR *d = opendir(abs_in);
+    if (!d) {
+        fprintf(stderr, RED "Cannot open input directory" RESET);
+        free(abs_in);
+        free(abs_out);
+        return;
+    }
+    struct dirent *ent;
+    while ((ent = readdir(d)) != NULL) {
+        if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, "..")) continue;
+
+        size_t src_n = strlen(abs_in) + 1 + strlen(ent->d_name) + 1;
+        size_t dst_n = strlen(abs_out) + 1 + strlen(ent->d_name) + 1;
+
+        char *src = malloc(src_n);
+        char *dst = malloc(dst_n);
+
+        snprintf(src, src_n, "%s/%s", abs_in, ent->d_name);
+        snprintf(dst, dst_n, "%s/%s", abs_out, ent->d_name);
+
+        struct stat st;
+        if (stat(src, &st) == 0 && S_ISDIR(st.st_mode)) {
+            _handle_move_dir(src, dst, move_flag);
+        } else {
+            _handle_copy(src, dst, move_flag);
+        }
+
+        free(src);
+        free(dst);
+    }
+
+    closedir(d);
+
+    free(abs_in);
+    free(abs_out);
+}
+
+void handle_move(char **args, int argc) {
+    if (argc < 2 || argc > 3) {
+        printf("Usage: mv <input_dir> <output_dir> [-c|-x]\n");
+        return;
+    }
+    int move_flag = 1; 
+    if (argc == 3) {
+        if (!strcmp(args[2], "-x")) move_flag = 0;
+        else if (!strcmp(args[2], "-c")) move_flag = 1;
+        else { fprintf(stderr, "Unknown flag %s\n", args[2]); return; }
+    }
+    _handle_move_dir(args[0], args[1], move_flag);
 }

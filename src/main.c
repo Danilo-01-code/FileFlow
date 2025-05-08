@@ -42,7 +42,6 @@ int main(void){
         return 1;  
     }
 
-    system(CLEAR);
 
     if (isFirstRunToday()) {
         showWelcome();
@@ -52,7 +51,7 @@ int main(void){
     
     while(1){   
         char prompt[1146];
-        snprintf(prompt, sizeof(prompt), BRED "%s @ " BGREEN "%s> " RESET, username, hostname);
+        snprintf(prompt, sizeof(prompt), BRED "%s @ " BGREEN "%s > " RESET, username, hostname);
         char *userInput = readline(prompt);
     
         if (*userInput) {

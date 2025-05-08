@@ -8,6 +8,7 @@ size_t count_words(char *sentence);
 int count_args(char **args);
 int dir_exists(const char *path);
 int create_dir(const char *path);
-
+char *make_absolute_dir(const char* path);
+char *make_absolute_file(const char* path);
 
 #endif 

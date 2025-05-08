@@ -13,5 +13,6 @@
 #define YELLOW "\033[1;33m"
 
 #define VERSION 1.0
+#define ABS_PATH_MAX 4096  // arbitrary value for compatibility
 
 #endif

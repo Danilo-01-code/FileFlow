@@ -22,15 +22,12 @@
     #define CLEAR "cls"
     #define GET_HOME() (getenv("USERPROFILE"))
 
-    static char* _get_cwd() {
+    static char* _get_curr() {
         static char buffer[1024];
-        if (_getcwd(buffer, sizeof(buffer)-2) == NULL) {
-            perror("Cannot obtain the curren directory (Windows)");
+        if (_get_cwd(buffer, sizeof(buffer)) == NULL) {
+            perror("Cannot obtain the current directory (Unix)");
             return NULL;
         }
-        size_t len = strlen(buffer);
-        buffer[len] = '\n';
-        buffer[len + 1] = '\0';
         return buffer;
     }
 
@@ -51,15 +48,12 @@
     #define CLEAR "clear"
     #define GET_HOME() (getenv("HOME"))
 
-    static char* _get_cwd() {
+    static char* _get_curr() {
         static char buffer[1024];
-        if (getcwd(buffer, sizeof(buffer)-2) == NULL) {
-            perror("Cannot obtain the current directory (Unix)");
+        if (getcwd(buffer, sizeof(buffer)) == NULL) {
+            perror("Cannot obtain the current directory (Windows)");
             return NULL;
         }
-        size_t len = strlen(buffer);
-        buffer[len] = '\n';
-        buffer[len + 1] = '\0';
         return buffer;
     }
 
@@ -68,4 +62,4 @@
 int get_computer_name(char *buffer, size_t size);
 void get_config_path(char *buffer, size_t size);
 
-#endif 
+#endif
