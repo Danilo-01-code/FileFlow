@@ -151,3 +151,8 @@ char* make_absolute_file(const char *path) {
     }
     return abs_path;
 }
+
+int is_subdir(const char *parent, const char *child) {
+    size_t len = strlen(parent);
+    return strncmp(parent, child, len) == 0 && (child[len] == '/' || child[len] == '\0');
+}

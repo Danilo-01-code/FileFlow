@@ -23,7 +23,8 @@
 
 void showWelcome(void);
 int isFirstRunToday(void);
-int get_username(char *username, size_t size, const char *path);
+int getUsername(char *username, size_t size, const char *path);
+int welcomeEveryRun(void);
 
 int main(void){
     char hostname[1024];
@@ -37,13 +38,16 @@ int main(void){
 
     get_config_path(path, sizeof(path));
 
-    if (get_username(username, sizeof(username), path) != 0) {
+    if (getUsername(username, sizeof(username), path) != 0) {
         printf("Cannot obtain or save your username.\n");
         return 1;  
     }
 
-
-    if (isFirstRunToday()) {
+    system(CLEAR);
+    if (welcomeEveryRun()){   
+        showWelcome();
+    }
+    else if (!isFirstRunToday()) {
         showWelcome();
     }
 
@@ -68,7 +72,7 @@ int main(void){
     return 0;
 }
 
-int get_username(char *username, size_t size, const char *path) {
+int getUsername(char *username, size_t size, const char *path) {
     FILE *file = fopen(path, "r");
 
     if (file) {
@@ -101,13 +105,20 @@ int get_username(char *username, size_t size, const char *path) {
 
 void showWelcome(void){ 
     printf(BOLD BBLUE "\n"
-        "╔════════════════════════════════════════════════════════════╗\n"
-        "║                      Welcome to FileFlow                  ║\n"
-        "╚════════════════════════════════════════════════════════════╝\n" RESET);
-    printf(BGREEN"           Your file automation assistant.\n"RESET);
-    printf("\n* Type help to see all available commands.\n");
-    printf("* For more information, check: /docs or README.md\n");
-    printf("This message is show one time per day.\n\n");
+        "╔════════════════════════════════════════════════════════════════════╗\n"
+        "║      ___________.__.__        ___________.__                       ║\n"
+        "║      \\_   _____/|__|  |   ____\\_   _____/|  |   ______  _  __      ║\n"
+        "║       |    __)  |  |  | _/ __ \\|    __)  |  |  /  _ \\ \\/ \\/ /      ║\n"
+        "║       |     \\   |  |  |_\\  ___/|     \\   |  |_(  <_> )     /       ║\n"
+        "║       \\___  /   |__|____/\\___  >___  /   |____/\\____/ \\/\\_/        ║\n"
+        "║           \\/                 \\/    \\/                              ║\n"
+        "╚════════════════════════════════════════════════════════════════════╝\n"
+    RESET);
+    printf(BGREEN"                    Your file automation assistant.\n"RESET);
+    printf("\n"
+        "* Type help to see all available commands.\n"
+        "* For more information, check: /docs or README.md\n"
+        "This message is shown one time per day. You can change this with the message command.\n\n");
 }
 
 int isFirstRunToday(void) {
@@ -121,9 +132,7 @@ int isFirstRunToday(void) {
 
     const char *home = GET_HOME();
     if (!home) home = ".";
-    snprintf(path_date, sizeof(path_date),
-             "%s%c.fileflow_last_run",
-             home, PATH_SEPARATOR);
+    snprintf(path_date, sizeof(path_date), "%s%c.fileflow_last_run", home, PATH_SEPARATOR);
 
     FILE *f = fopen(path_date, "r+");
 
@@ -134,7 +143,7 @@ int isFirstRunToday(void) {
         if (!f) return 0;  
     }
 
-    if (strcmp(last_date, today) != 0) {
+    if (!strcmp(last_date, today)) {
         freopen(path_date, "w", f);
         fprintf(f, "%s\n", today);
         fclose(f);
@@ -143,4 +152,33 @@ int isFirstRunToday(void) {
 
     fclose(f);
     return 0;
+}
+
+int welcomeEveryRun(void){
+    char path[512];
+    char welcome[8] = {0};
+    const char *home = GET_HOME();
+    if (!home) home = ".";
+
+    snprintf(path, sizeof(path), "%s%c.welcome", home, PATH_SEPARATOR);
+    FILE *f = fopen(path, "r");
+
+    if (!f){    
+        return 0;
+    }
+    
+    if (fgets(welcome, sizeof(welcome), f) == NULL) {
+        fclose(f);
+        return 0;
+    }
+
+    welcome[strcspn(welcome, "\n")] = 0;
+
+    if (strcmp(welcome, "0") == 0) {
+        fclose(f);
+        return 0;
+    } else {
+        fclose(f);
+        return 1;
+    }
 }

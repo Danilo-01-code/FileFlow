@@ -38,6 +38,7 @@ void processInput(char userInput[], size_t length){
         {"arc", handle_architecture},
         {"name", handle_name},
         {"mv", handle_move},
+        {"welcome", handle_welcome},
         {NULL, NULL} 
     };
 

@@ -24,17 +24,19 @@ void handle_help(char **args, int argc){
         _handle_too_many_args(args,argc);
         return;
     }
-    printf(GREEN "These are some FileFlow commands:\n\n" RESET);
-    printf("  cmp <input_path> <output_path>          Compresses the file at <input_path> and saves on <output_path>\n");
-    printf("  dcmp <input_path> <output_path>         Decompresses the ZIP file at <input_path> to <output_path>\n");
-    printf("  mv <input_path> <output_path> -c | -x            Copy (-c flag) or Cut (-x flag) the files of a guiven \n<input_file> to an <output_file>\n");
-    printf("      -c : Copy mode (the original files remain in place)\n      -x : Cut mode (the original files are removed after transfer)\n\n");
-    printf("  version             See the current Version\n");
-    printf("  clear               Clear the REPL\n");
-    printf("  curr                see the current directory\n");
-    printf("  arc                 See your computer architecture (64 or 32 bits)\n");
-    printf("  name                Your current OS name\n");
-    printf("  exit                Exit the system\n\n");
+
+    printf(GREEN "These are some FileFlow commands:\n\n" RESET
+        "  cmp  <input_path> <output_path>          Compresses the file at <input_path> and saves on <output_path>\n"
+        "  dcmp <input_path> <output_path>          Decompresses the ZIP file at <input_path> to <output_path>\n"
+        "  mv   <input_path> <output_path> -c | -x  Copy (-c flag) or Cut (-x flag) the files of a given <input_file> to an <output_file>\n"
+        "       -c : Copy mode (the original files remain in place)\n"
+        "       -x : Cut mode (the original files are removed after transfer)\n\n"
+        "  version             See the current Version\n"
+        "  clear               Clear the REPL\n"
+        "  curr                See the current directory\n"
+        "  arc                 See your computer architecture (64 or 32 bits)\n"
+        "  name                Your current OS name\n"
+        "  exit                Exit the system\n\n");
 }
 
 void handle_unknown(char *arg){
@@ -222,12 +224,55 @@ void handle_name(char **args, int argc){
     printf("%s\n", NAME);
 }
 
+void handle_welcome(char **args, int argc){
+    if (argc != 0){ 
+        _handle_too_many_args(args,argc);
+        return;
+    }  
+
+    char path[512];
+    char welcome[8] = {0};
+    const char *home = GET_HOME();
+    if (!home) home = ".";
+
+    snprintf(path, sizeof(path), "%s%c.welcome", home, PATH_SEPARATOR);
+    FILE *f = fopen(path, "r+");
+
+    if (!f) {
+        f = fopen(path, "w+");
+        if (!f) return;
+        strcpy(welcome, "1"); 
+        fprintf(f, "1\n");
+        fclose(f);
+        printf("The " BBLUE "Welcome message" RESET " now will be shown whenever you start the system\n");
+        return;
+    }
+
+    if (fgets(welcome, sizeof(welcome), f) == NULL) {
+        fclose(f);
+        return;
+    }
+
+    welcome[strcspn(welcome, "\n")] = 0;
+
+    fseek(f, 0, SEEK_SET);
+    if (strcmp(welcome, "0") == 0) {
+        fprintf(f, "1\n");
+        printf("The " BBLUE "Welcome message" RESET " now will be shown whenever you start the system\n");
+    } else {
+        fprintf(f, "0\n");
+        printf("The " BBLUE "Welcome message" RESET " now will " RED "not" RESET " be shown whenever you start the system\n");
+    }
+
+    fclose(f);
+}
+
 void _handle_copy(const char *in_file, const char *out_file, int move_flag) {
     FILE *in_fp = fopen(in_file, "rb");
     FILE *out_fp = fopen(out_file, "wb");
 
     if (!in_fp || !out_fp) {
-        fprintf(stderr, RED "Cannot open files" RESET);
+        fprintf(stderr, RED "Cannot open files\n" RESET);
         if (in_fp) fclose(in_fp);
         if (out_fp) fclose(out_fp);
         return;
@@ -240,7 +285,7 @@ void _handle_copy(const char *in_file, const char *out_file, int move_flag) {
     if (!move_flag) {
         if (remove(in_file) == 0)
             printf("Moved: %s -> %s\n", in_file, out_file);
-        else fprintf(stderr, RED"Failed to remove original" RESET);
+        else fprintf(stderr, RED"Failed to remove original\n" RESET);
     } else {
         printf(GREEN "Copied: " RESET "%s" GREEN "->" RESET "%s\n", in_file, out_file);
     }
@@ -256,9 +301,14 @@ void _handle_move_dir(const char *in_dir, const char *out_dir, int move_flag) {
         return;
     }
 
+    if (is_subdir(abs_in, abs_out)){  
+        fprintf(stderr,"Cannot copy/cut on nested directories (avoid infinit recursion). Please choose a different output directory\n");
+        return;
+    }
+
     DIR *d = opendir(abs_in);
     if (!d) {
-        fprintf(stderr, RED "Cannot open input directory" RESET);
+        fprintf(stderr, RED "Cannot open input directory\n" RESET);
         free(abs_in);
         free(abs_out);
         return;

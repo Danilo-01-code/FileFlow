@@ -10,5 +10,6 @@ int dir_exists(const char *path);
 int create_dir(const char *path);
 char *make_absolute_dir(const char* path);
 char *make_absolute_file(const char* path);
+int is_subdir(const char *parent, const char *child);
 
 #endif 
