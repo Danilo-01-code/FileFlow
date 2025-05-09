@@ -39,6 +39,9 @@ void processInput(char userInput[], size_t length){
         {"name", handle_name},
         {"mv", handle_move},
         {"welcome", handle_welcome},
+        {"cd",handle_change_directory},
+        {"mk", handle_make},
+        {"rm", handle_remove},
         {NULL, NULL} 
     };
 

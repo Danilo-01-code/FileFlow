@@ -21,6 +21,7 @@
     #define MKDIR(path) _mkdir(path)
     #define CLEAR "cls"
     #define GET_HOME() (getenv("USERPROFILE"))
+    #define chdir _chdir
 
     static char* _get_curr() {
         static char buffer[1024];

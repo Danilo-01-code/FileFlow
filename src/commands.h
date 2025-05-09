@@ -16,5 +16,8 @@ void handle_move(char **args, int argc);
 void _handle_move_dir(const char *in_file, const char *out_file, int copy);
 void _handle_copy(char *in_dir, char *out_dir, int copy);
 void handle_welcome(char **args, int argc);
+void handle_change_directory(char **args, int argc);
+void handle_make(char **args, int argc);
+void handle_remove(char **args, int argc);
 
 #endif 

@@ -31,12 +31,16 @@ void handle_help(char **args, int argc){
         "  mv   <input_path> <output_path> -c | -x  Copy (-c flag) or Cut (-x flag) the files of a given <input_file> to an <output_file>\n"
         "       -c : Copy mode (the original files remain in place)\n"
         "       -x : Cut mode (the original files are removed after transfer)\n\n"
+        "  mk   <dir | file>   Make a directory or a file. Write '/example' for create a dir and 'example.extension' for a file\n"
+        "  rm   <dir | file>   Remove a file or a directory\n"
         "  version             See the current Version\n"
         "  clear               Clear the REPL\n"
         "  curr                See the current directory\n"
         "  arc                 See your computer architecture (64 or 32 bits)\n"
         "  name                Your current OS name\n"
-        "  exit                Exit the system\n\n");
+        "  exit                Exit the system\n"
+        "  welcome             Change the welcome config\n"
+        "  cd                  Change directory\n\n");
 }
 
 void handle_unknown(char *arg){
@@ -188,7 +192,7 @@ void handle_version(char **args, int argc){
         _handle_too_many_args(args,argc);
         return;
     }
-    printf("%f\n",VERSION);
+    printf("%f.2f\n",VERSION);
 }
 
 void handle_clear(char **args, int argc){
@@ -355,4 +359,66 @@ void handle_move(char **args, int argc) {
         else { fprintf(stderr, "Unknown flag %s\n", args[2]); return; }
     }
     _handle_move_dir(args[0], args[1], move_flag);
+}
+
+void handle_change_directory(char **args, int argc){
+    if (argc != 1){     
+        printf("Usage: cd <dir>\n");
+        return;
+    }
+
+    if (chdir(args[0]) != 0) {
+        fprintf(stderr, "Cannot Change to directory '%s'\n", args[0]);
+        return;
+    }
+
+    char * curr = _get_curr();
+
+    if (strstr(args[0],"..")){  
+        printf("%s" RED " <-\n" RESET, curr);
+    }     
+    else{   
+        printf(GREEN "-> " RESET "%s\n", curr);
+    }  
+}
+
+void handle_make(char **args, int argc){ 
+    if (argc != 1){     
+        printf("Usage: mk <dir | file>\n");
+        return;
+    }
+
+    char *new_file = args[0];
+    if (new_file[0] == '/'){ 
+        char *dir = strdup(new_file);
+        if (dir == NULL) {
+            printf("strdup\n");
+            return;
+        }
+
+        memmove(dir, dir + 1, strlen(dir));
+
+        if (MKDIR(dir) != 0) {
+            printf("Cannot create the directory: '%s'\n", dir);
+            return;
+        }
+        printf("directory: '/%s' created\n", dir); 
+        free(dir);
+        return;
+    }
+
+    FILE *f = fopen(new_file,"w");
+    if (f == NULL) {
+        printf("cannot create the file: '%s'\n",new_file);
+        return;
+    }
+    fclose(f);
+    printf("File: '%s' created\n", new_file);
+}   
+
+void handle_remove(char **args, int argc){  
+    if (argc != 1){     
+        printf("Usage: rm <dir | file>\n");
+        return;
+    }
 }
