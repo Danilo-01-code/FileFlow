@@ -22,6 +22,10 @@
     #define CLEAR "cls"
     #define GET_HOME() (getenv("USERPROFILE"))
     #define chdir _chdir
+    #define rmdir _rmdir
+    #define stat _stat
+    #define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+    #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 
     static char* _get_curr() {
         static char buffer[1024];
@@ -34,6 +38,7 @@
 
 #else
     #include <unistd.h>
+    #include <dirent.h>
     #include <sys/stat.h>
     #include <sys/types.h>
 

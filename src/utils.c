@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/stat.h>
 #include <errno.h>
 
 #include "utils.h"
@@ -155,4 +154,63 @@ char* make_absolute_file(const char *path) {
 int is_subdir(const char *parent, const char *child) {
     size_t len = strlen(parent);
     return strncmp(parent, child, len) == 0 && (child[len] == '/' || child[len] == '\0');
+}
+
+// returns 1 if dir is empty, 0 is not empty, -1 error
+int is_directory_empty(const char *path) {
+#ifdef _WIN32
+    char search_path[ABS_PATH_MAX];
+    snprintf(search_path, ABS_PATH_MAX, "%s\\*", path);
+
+    WIN32_FIND_DATA fd;
+    HANDLE hFind = FindFirstFile(search_path, &fd);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        fprintf(stderr, "Erro ao abrir diretório '%s': %lu\n", path, GetLastError());
+        return -1;
+    }
+
+    int is_empty = 1;
+    do {
+        if (strcmp(fd.cFileName, ".") != 0 && strcmp(fd.cFileName, "..") != 0) {
+            is_empty = 0;
+            break;
+        }
+    } while (FindNextFile(hFind, &fd));
+
+    FindClose(hFind);
+    return is_empty;
+#else
+    DIR *dir = opendir(path);
+    if (dir == NULL) {
+        perror("Erro ao abrir diretório");
+        return -1;
+    }
+
+    struct dirent *entry;
+    int is_empty = 1;
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") != 0 &&
+            strcmp(entry->d_name, "..") != 0) {
+            is_empty = 0;
+            break;
+        }
+    }
+
+    closedir(dir);
+    return is_empty;
+#endif
+}
+
+void cleanup_and_exit(char **prompt, char **userInput, int exit_code) {
+    if (userInput && *userInput) {
+        free(*userInput);
+        *userInput = NULL;
+    }
+    if (prompt && *prompt) {
+        free(*prompt);
+        *prompt = NULL;
+    }
+    printf("Bye Bye\n");
+    exit(exit_code);
 }

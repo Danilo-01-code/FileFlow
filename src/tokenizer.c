@@ -29,7 +29,7 @@ void processInput(char userInput[], size_t length){
 
     Command commands[] = {
         {"help", handle_help},
-        {"exit", handle_exit},
+        {"bye", handle_bye},
         {"version", handle_version},
         {"cmp", handle_compress},
         {"dcmp", handle_decompress},

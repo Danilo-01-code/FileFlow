@@ -47,12 +47,12 @@ void handle_unknown(char *arg){
     printf("%s:" RED " command not found" RESET ", digit help to see the commands\n", arg);
 }
 
-void handle_exit(char **args, int argc){
+void handle_bye(char **args, int argc){
     if (argc != 0){ 
         _handle_too_many_args(args,argc);
         return;
     }
-    printf("Bye Bye\n");
+    cleanup_and_exit(&prompt, &userInput, 0);
     exit(0);
 }
 
@@ -420,5 +420,40 @@ void handle_remove(char **args, int argc){
     if (argc != 1){     
         printf("Usage: rm <dir | file>\n");
         return;
+    }
+
+    struct stat path_stat;
+    char* path = args[0];
+
+    if (stat(path, &path_stat) != 0){
+        printf(RED "Cannot access this path\n" RESET);
+        return;
+    }
+
+    if (S_ISREG(path_stat.st_mode)) {
+        if (remove(path) == 0) printf("File '%s' was removed successfully.\n", path);
+        else printf(RED"Cannot remove the file\n" RESET);
+        return;
+    }
+    
+    if (S_ISDIR(path_stat.st_mode)){
+        int empty = is_directory_empty(path);
+
+        if (empty == -1){
+            printf(RED"Cannot verify directory\n"RESET);
+            return;
+        }
+
+        if (empty) {
+            if (rmdir(path) == 0) printf("The empty directory '%s' was removed.\n", path);
+            else printf(RED "Cannot Remove Directory\n" RESET);
+        } else {
+            printf("The directory '%s' is not empty.\n", path);
+            //TODO
+        }
+
+    }
+    else{   
+          printf(RED"The path '%s' isnt a file neither an recognized directory.\n"RESET, path);
     }
 }

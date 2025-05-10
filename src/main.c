@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <signal.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -25,6 +26,10 @@ void showWelcome(void);
 int isFirstRunToday(void);
 int getUsername(char *username, size_t size, const char *path);
 int welcomeEveryRun(void);
+void cannot_exit(int signo);
+
+char *prompt = NULL;
+char *userInput = NULL;
 
 int main(void){
     char hostname[1024];
@@ -44,6 +49,7 @@ int main(void){
     }
 
     system(CLEAR);
+
     if (welcomeEveryRun()){   
         showWelcome();
     }
@@ -51,12 +57,22 @@ int main(void){
         showWelcome();
     }
 
-    char userInput[256];
+    size_t required_size = strlen(BRED) + strlen(username) 
+        + strlen(" @ ") + strlen(BGREEN) + strlen(hostname) 
+        + strlen(" > ") + strlen(RESET) + 1;
+
+    prompt = (char *)malloc(required_size);
+
+    if (prompt == NULL) {
+        fprintf(stderr, RED "Cannot allocate memory for the prompt.\n" RESET);
+        return 1;
+    }
+
+    signal(SIGINT, cannot_exit); // Avoid memory Leaks.
     
     while(1){   
-        char prompt[1146];
-        snprintf(prompt, sizeof(prompt), BRED "%s @ " BGREEN "%s > " RESET, username, hostname);
-        char *userInput = readline(prompt);
+        snprintf(prompt, required_size, BRED "%s @ " BGREEN "%s > " RESET, username, hostname);
+        userInput = readline(prompt); // TODO: sanatize the input, for lowercase
     
         if (*userInput) {
             add_history(userInput);
@@ -65,9 +81,9 @@ int main(void){
                 processInput(userInput, length);
             }
         }
-    
-        free(userInput); 
+        free(userInput);
     }
+    free(prompt);
 
     return 0;
 }
@@ -181,4 +197,16 @@ int welcomeEveryRun(void){
         fclose(f);
         return 1;
     }
+}
+
+void cannot_exit(int signo){ 
+    (void)signo;
+    rl_replace_line("", 0);        
+    rl_on_new_line();              
+    rl_redisplay();                
+
+    printf("\nFor exit use the: " GREEN "'bye'" RESET " command\n");
+
+    rl_on_new_line();              
+    rl_redisplay();
 }
