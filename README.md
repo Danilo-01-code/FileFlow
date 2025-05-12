@@ -14,3 +14,8 @@ If you wanna to use FileFlow as a system command (make the program executable fo
 sudo cp FileFlow /usr/local/bin/
 ```
 
+on Windows you should run this command as admin: 
+
+```
+Copy-Item -Path .\FileFlow.exe -Destination "C:\Windows\System32\"
+```

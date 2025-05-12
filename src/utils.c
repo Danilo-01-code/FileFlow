@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/stat.h>
 #include <errno.h>
 
@@ -86,6 +87,46 @@ int create_dir(const char *path) {
     return MKDIR(tmp);
 }
 
+void remove_dir(const char *path){
+    struct dirent *entry;
+    DIR *dir = opendir(path);
+
+    if (dir == NULL) {
+        printf("Cannot open dir\n");
+        return;
+    }
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            continue;
+
+        char fullpath[1024];
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", path, entry->d_name);
+        printf(RED "Deleting " RESET"-> %s\n", fullpath);
+
+        struct stat statbuf;
+        if (stat(fullpath, &statbuf) != 0) {
+            perror("Cannot access file");
+            continue;
+        }
+
+        if (S_ISDIR(statbuf.st_mode)) {
+            remove_dir(fullpath); // recursive dir remove
+        } else {
+            if (remove(fullpath) != 0)
+                perror("Cannot remove file");
+        }
+    }
+
+    closedir(dir);
+
+    if (rmdir(path) != 0) {
+        printf("Cannot remove dir by the root\n");
+        return;
+    }
+
+}
+
 char *ensure_zip_extension(const char *filename){
     size_t len = strlen(filename);
     
@@ -156,50 +197,73 @@ int is_subdir(const char *parent, const char *child) {
     return strncmp(parent, child, len) == 0 && (child[len] == '/' || child[len] == '\0');
 }
 
-// returns 1 if dir is empty, 0 is not empty, -1 error
-int is_directory_empty(const char *path) {
+// returns 0 if there is no file and -1 if cannot access
+long long get_directory_size(const char *dir_path) {
+    long long size = 0;
 #ifdef _WIN32
-    char search_path[ABS_PATH_MAX];
-    snprintf(search_path, ABS_PATH_MAX, "%s\\*", path);
+    WIN32_FIND_DATA findFileData;
+    HANDLE hFind = INVALID_HANDLE_VALUE;
 
-    WIN32_FIND_DATA fd;
-    HANDLE hFind = FindFirstFile(search_path, &fd);
+    char search_path[MAX_PATH];
+    snprintf(search_path, sizeof(search_path), "%s\\*", dir_path);
+
+    hFind = FindFirstFile(search_path, &findFileData);
+
     if (hFind == INVALID_HANDLE_VALUE) {
-        fprintf(stderr, "Erro ao abrir diretório '%s': %lu\n", path, GetLastError());
+        perror("FindFirstFile");
         return -1;
     }
 
-    int is_empty = 1;
     do {
-        if (strcmp(fd.cFileName, ".") != 0 && strcmp(fd.cFileName, "..") != 0) {
-            is_empty = 0;
-            break;
+        if (strcmp(findFileData.cFileName, ".") == 0 || strcmp(findFileData.cFileName, "..") == 0)
+            continue;
+        
+        char path[MAX_PATH];
+        snprintf(path, sizeof(path), "%s\\%s", dir_path, findFileData.cFileName);
+
+        if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            size += get_directory_size(path); // Recursion on dirs
+        } else {
+            size += ((long long)findFileData.nFileSizeHigh << 32) | findFileData.nFileSizeLow;
         }
-    } while (FindNextFile(hFind, &fd));
+        
+    } while (FindNextFile(hFind, &findFileData) != 0);
 
     FindClose(hFind);
-    return is_empty;
+
 #else
-    DIR *dir = opendir(path);
+    DIR *dir = opendir(dir_path);
+
     if (dir == NULL) {
-        perror("Erro ao abrir diretório");
+        perror("Cannot open the dir");
         return -1;
     }
 
     struct dirent *entry;
-    int is_empty = 1;
+    struct stat file_stat;
+    char path[1024];
 
     while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry->d_name, ".") != 0 &&
-            strcmp(entry->d_name, "..") != 0) {
-            is_empty = 0;
-            break;
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            continue;
+
+        snprintf(path, sizeof(path), "%s/%s", dir_path, entry->d_name);
+
+        if (stat(path, &file_stat) == -1){   
+            perror("stat");
+            continue;
+        }
+
+        if (S_ISDIR(file_stat.st_mode)) {
+            size += get_directory_size(path); // recursion on dirs
+        } else {
+            size += file_stat.st_size; 
         }
     }
 
     closedir(dir);
-    return is_empty;
 #endif
+    return size;
 }
 
 void cleanup_and_exit(char **prompt, char **userInput, int exit_code) {
@@ -213,4 +277,11 @@ void cleanup_and_exit(char **prompt, char **userInput, int exit_code) {
     }
     printf("Bye Bye\n");
     exit(exit_code);
+}
+
+void to_lowercase(char *str) {
+    while (*str) {
+        *str = tolower((unsigned char)*str);
+        str++;
+    }
 }

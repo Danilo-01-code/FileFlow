@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <time.h>
 #include <signal.h>
 #include <readline/readline.h>
@@ -72,7 +73,8 @@ int main(void){
     
     while(1){   
         snprintf(prompt, required_size, BRED "%s @ " BGREEN "%s > " RESET, username, hostname);
-        userInput = readline(prompt); // TODO: sanatize the input, for lowercase
+        userInput = readline(prompt);
+        to_lowercase(userInput);
     
         if (*userInput) {
             add_history(userInput);

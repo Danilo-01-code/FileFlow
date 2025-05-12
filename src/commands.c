@@ -424,6 +424,7 @@ void handle_remove(char **args, int argc){
 
     struct stat path_stat;
     char* path = args[0];
+    int emptyContent = 0;
 
     if (stat(path, &path_stat) != 0){
         printf(RED "Cannot access this path\n" RESET);
@@ -431,29 +432,55 @@ void handle_remove(char **args, int argc){
     }
 
     if (S_ISREG(path_stat.st_mode)) {
+        path = make_absolute_file(path);
         if (remove(path) == 0) printf("File '%s' was removed successfully.\n", path);
         else printf(RED"Cannot remove the file\n" RESET);
         return;
     }
-    
-    if (S_ISDIR(path_stat.st_mode)){
-        int empty = is_directory_empty(path);
 
-        if (empty == -1){
-            printf(RED"Cannot verify directory\n"RESET);
+    path = make_absolute_dir(path);
+    long long size = get_directory_size(path); 
+
+    if (size == -1 || path == NULL){
+        printf(RED"Cannot verify directory\n"RESET);
+        return;
+    }
+
+    if (size == 0) {
+        if (rmdir(path) == 0){  
+            printf("The empty directory '%s' was removed.\n", path);
             return;
         }
+        else{   
+            emptyContent = 1;
+        }
+    }
 
-        if (empty) {
-            if (rmdir(path) == 0) printf("The empty directory '%s' was removed.\n", path);
-            else printf(RED "Cannot Remove Directory\n" RESET);
-        } else {
-            printf("The directory '%s' is not empty.\n", path);
-            //TODO
+    char userChoice;
+    while (1){  
+        if (emptyContent){
+            printf("The directory "BGREEN "%s" RESET " has empty files and/or directories inside it.\n", path);
+        }
+        else{
+            printf("The directory " BGREEN "%s" RESET " has " BRED "%lld" RESET " bytes of size.\n", path, size);
         }
 
+        printf("Do you want to delete ALL the directory? [Y | N] ");
+        scanf(" %c", &userChoice);
+
+        if (userChoice == 'y' || userChoice == 'Y')
+        {
+            printf("Deleting all the contents of " BGREEN "%s\n" RESET, path);
+            remove_dir(path);
+            break;
+        }
+        else if (userChoice == 'n' || userChoice == 'N')
+        {
+            break;
+        }
     }
-    else{   
-          printf(RED"The path '%s' isnt a file neither an recognized directory.\n"RESET, path);
-    }
+}
+
+void handle_ls(char **args, int argc){  
+    
 }

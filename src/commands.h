@@ -19,5 +19,6 @@ void handle_welcome(char **args, int argc);
 void handle_change_directory(char **args, int argc);
 void handle_make(char **args, int argc);
 void handle_remove(char **args, int argc);
+void handle_ls(char **args, int argc);
 
 #endif 
