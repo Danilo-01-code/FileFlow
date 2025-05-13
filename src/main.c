@@ -49,7 +49,7 @@ int main(void){
         return 1;  
     }
 
-    system(CLEAR);
+
 
     if (welcomeEveryRun()){   
         showWelcome();

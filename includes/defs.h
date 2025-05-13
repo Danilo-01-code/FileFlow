@@ -13,6 +13,7 @@
 #define YELLOW "\033[1;33m"
 
 #define VERSION 1.0
-#define ABS_PATH_MAX 4096  // arbitrary value for compatibility
+#define ABS_PATH_MAX 4096 // arbitrary value for compatibility
+#define MAX_OUTPUTS 128
 
 #endif
