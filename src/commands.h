@@ -28,5 +28,8 @@ int _handle_compress_directory(zipFile zf, const char *dirpath, const char *base
 int _handle_compress_file(char *path, zipFile zf, char *relpath);
 void handle_rename(char **args, int argc);
 void _handle_remove_all(char *path);
+void handle_find(char** argds, int argc);
+void handle_read(char **args, int argc);
+void handle_write(char **args, int argc);
 
 #endif 

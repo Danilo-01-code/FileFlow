@@ -11,9 +11,9 @@ Usage:
 queue <file | directory> <command 1> <command 2> [...]
 ```
 
-Example:
+In this example 'myfile' will be decompress (dcmp), moved (mv), and read; 
 ```
-  queue myfolder cmp mv dcmp
+  queue myfile dcmp mv read
 ```
 
 ## Internal logic

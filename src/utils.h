@@ -16,6 +16,7 @@ char *make_absolute_dir(const char* path);
 char *make_absolute_file(const char* path);
 int is_subdir(const char *parent, const char *child);
 long long get_directory_size(const char* dir_path);
+long get_file_size(const char* file);
 void cleanup_and_exit(char **prompt, char **userInput, int exit_code);
 void to_lowercase(char *str);
 void remove_dir(const char* path);

@@ -290,3 +290,14 @@ void to_lowercase(char *str) {
         str++;
     }
 }
+
+long get_file_size(const char* file) {
+    FILE *f = fopen(file, "r");
+    if (!f) return -1;
+
+    fseek(f, 0, SEEK_END);
+    long size = ftell(f);
+    fclose(f);
+
+    return size;
+}

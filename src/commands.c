@@ -44,12 +44,15 @@ void handle_help(char **args, int argc){
         "  queue <file | dir> [other commands]       Make an command execution queue, see /docs/queue.md for more info\n"
         "  dcmp  <input_path> <output_path>          Decompresses the ZIP file at <input_path> to <output_path>\n"
         "  rm    <dir | file> [dir | file] [...]     Remove files or directories\n"
+        "  write <file> <text>                       Write an <text> on an given file\n"
+        "  read  <file>                              Read an file\n"
         "  mv    <input_path> <output_path> -c | -x  Copy (-c flag) or Cut (-x flag) the files of a given <input_file> to an <output_file>\n"
         "        -c : Copy mode (the original files remain in place)\n"
         "        -x : Cut mode (the original files are removed after transfer)\n"
         "             by pattern the <output_path> id /out\n\n"
         "  mk   <dir | file>            Make a directory or a file. Write '/example' for create a dir and 'example.extension' for a file\n"
-        "  rn   <dir | file> <new_name> Rename a file or directory\n\n"
+        "  rn   <dir | file> <new_name> Rename a file or directory\n"
+        "  find <file> <word>           Finds all occurrences of <word> in a guiven <file>\n"
         "  version             See the current Version\n"
         "  clear               Clear the REPL\n"
         "  curr                See the current directory\n"
@@ -711,4 +714,125 @@ void handle_rename(char **args, int argc){
         printf("Cannot rename Path: " GREEN "'%s'" RESET " to: " GREEN "'%s'\n" RESET, old_path, absolute_new_path);
     }
     free(old_path);    
+}
+
+void handle_find(char **args, int argc){ 
+    if (argc !=2){  
+        printf("Usage: find <file> <word>\n");
+        return;
+    }
+
+    char *file = make_absolute_file(args[0]);
+    char *word = args[1];
+
+    FILE *file_open = fopen(file, "r");
+
+    if (!file_open){
+        printf("Cannot open: %s\n", file);    
+        return;
+    }
+
+    char row[1024];
+    int n_row = 1;
+    char* new_row = NULL;
+    
+    while (fgets(row, sizeof(row), file_open)){ 
+        if (strstr(row, word)){ 
+
+            printf(BBLUE "[%d] " RESET, n_row);
+            for (int i = 0; row[i] != '\0'; i++){
+                if (strchr(word, row[i])){   
+                    printf(BGREEN "%c" RESET, row[i]);
+                } else {
+                    printf("%c", row[i]);
+                }
+            }
+        }
+        n_row++;
+    }
+    printf("\n");
+    fclose(file_open);
+    _handle_last_single_output(file);
+}
+
+void handle_read(char **args, int argc){
+    if (argc != 1){  
+        printf("Usage: read <file>\n");
+        return;
+    }
+
+    char *file = make_absolute_file(args[0]);
+
+    if (!file || strlen(file) == 0) {
+        printf("Invalid path\n");
+        free(file); 
+        return;
+    }
+
+    FILE *file_open = fopen(file, "r");
+    if (!file_open) {
+        printf("Cannot open: %s\n", file);
+        free(file);
+        return;
+    }
+
+    char row[1024];
+    int n_row = 1;
+
+    while (fgets(row, sizeof(row), file_open)) {
+        printf(BBLUE "[%d] " RESET "%s", n_row, row);
+        n_row++;
+    }
+
+    printf("\n");
+    fclose(file_open);
+    _handle_last_single_output(file);
+    free(file);
+}
+
+void handle_write(char **args, int argc){
+    if (argc != 2){  
+        printf("Usage: write <file> <text>\n");
+        return;
+    }
+
+    char *file = make_absolute_file(args[0]);
+    
+    if (!file || strlen(file) == 0) {
+        printf("Invalid path\n");
+        free(file); 
+        return;
+    }
+
+    long file_size = get_file_size(file);
+
+    if (file_size > 0){ 
+        char userChoice;
+        printf("File already contains %ld bytes.\n", file_size);
+
+        while (1){  
+            printf("You wanna overwite ? [Y | N] ");
+            scanf(" %c", &userChoice);
+            if (userChoice == 'Y' || userChoice == 'y'){ 
+                break;
+            }
+            else if (userChoice == 'N' || userChoice == 'n'){   
+                return;
+            }
+        }
+    }
+
+    FILE *file_open = fopen(file, "w");
+    if (!file_open){
+        printf("Cannot open or create file: %s\n", file);    
+        free(file);
+        return;
+    }
+
+    fprintf(file_open,"%s\n", args[1]);
+    printf("Text written to file: %s\n", file);
+
+    fclose(file_open);
+    free(file);
+    _handle_last_single_output(file);
 }

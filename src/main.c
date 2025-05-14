@@ -49,7 +49,7 @@ int main(void){
         return 1;  
     }
 
-    system(CLEAR);
+
 
     if (welcomeEveryRun()){   
         showWelcome();
@@ -122,7 +122,7 @@ int getUsername(char *username, size_t size, const char *path) {
 }
 
 void showWelcome(void){ 
-    printf(BOLD BBLUE "\n"
+    printf(BBLUE "\n"
         "╔════════════════════════════════════════════════════════════════════╗\n"
         "║      ___________.__.__        ___________.__                       ║\n"
         "║      \\_   _____/|__|  |   ____\\_   _____/|  |   ______  _  __      ║\n"
