@@ -102,7 +102,7 @@ void remove_dir(const char *path){
 
         char fullpath[1024];
         snprintf(fullpath, sizeof(fullpath), "%s/%s", path, entry->d_name);
-        printf(RED "Deleting " RESET"-> %s\n", fullpath);
+        printf(RED "Deleting dir" RESET"-> %s\n", fullpath);
 
         struct stat statbuf;
         if (stat(fullpath, &statbuf) != 0) {
@@ -145,50 +145,55 @@ char *ensure_zip_extension(const char *filename){
 }
 
 char* make_absolute_dir(const char *path) {
-    if (!path) return NULL;
     char *abs_path = NULL;
     char *cwd = _get_curr();
-    if (!cwd) return NULL;
 
-    if (path[0] == '/') { // Already absolute
-        abs_path = strdup(path);
-    } else if (strcmp(path, ".") == 0) {
+    if (!cwd) return strdup("");  // secure Fallback 
+
+    if (!path || strcmp(path, ".") == 0) {
         abs_path = strdup(cwd);
+    } else if (path[0] == '/') { // already absolute
+        abs_path = strdup(path);
     } else {
-        size_t n = strlen(cwd) + 1 + strlen(path) + 1;
+        size_t n = strlen(cwd) + 1 + strlen(path) + 1; 
         abs_path = malloc(n);
         if (abs_path) snprintf(abs_path, n, "%s/%s", cwd, path);
     }
-    if (!abs_path) return NULL;
+
+    if (!abs_path) return strdup("");
 
     struct stat st;
     if (stat(abs_path, &st) != 0) {
-        if (mkdir(abs_path, 0755) != 0) {
+        if (MKDIR(abs_path) != 0) {
             perror("Failed to create directory");
             free(abs_path);
-            return NULL;
+            return strdup("");
         }
     } else if (!S_ISDIR(st.st_mode)) {
         fprintf(stderr, "Path exists but is not a directory: %s\n", abs_path);
         free(abs_path);
-        return NULL;
+        return strdup("");
     }
+
     return abs_path;
 }
 
 char* make_absolute_file(const char *path) {
-    if (!path) return NULL;
     char *abs_path = NULL;
     char *cwd = _get_curr();
-    if (!cwd) return NULL;
 
-    if (path[0] == '/') {
+    if (!cwd) return strdup("");
+
+    if (!path) {
+        abs_path = strdup(cwd);
+    } else if (path[0] == '/') {
         abs_path = strdup(path);
     } else {
         size_t n = strlen(cwd) + 1 + strlen(path) + 1;
         abs_path = malloc(n);
         if (abs_path) snprintf(abs_path, n, "%s/%s", cwd, path);
     }
+    if (!abs_path) return strdup("");
     return abs_path;
 }
 

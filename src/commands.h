@@ -25,5 +25,8 @@ void handle_ls(char **args, int argc);
 void handle_queue(char **args, int argc);
 void _handle_last_single_output(const char *filename);
 int _handle_compress_directory(zipFile zf, const char *dirpath, const char *basepath);
+int _handle_compress_file(char *path, zipFile zf, char *relpath);
+void handle_rename(char **args, int argc);
+void _handle_remove_all(char *path);
 
 #endif 

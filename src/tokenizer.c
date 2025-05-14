@@ -30,6 +30,7 @@ Command commands[] = {
     {"rm", handle_remove},
     {"ls", handle_ls},
     {"queue", handle_queue},
+    {"rn", handle_rename},
     {NULL, NULL} 
 };
 
@@ -40,7 +41,7 @@ void freeTokens(char** tokens){
     free(tokens);
 }
 
-void executeCommand(char** tokens, int needsFree){
+void executeCommand(char** tokens){
     int found = 0;
     for (int i = 0; commands[i].name != NULL; i++) {
         if (strcmp(tokens[0], commands[i].name) == 0) {
@@ -52,9 +53,8 @@ void executeCommand(char** tokens, int needsFree){
     if (!found) {
         handle_unknown(tokens[0]);
     }
-    if (needsFree){
-        freeTokens(tokens);
-    }
+    
+    freeTokens(tokens);
 }
 
 void processInput(char userInput[], size_t length){
@@ -63,5 +63,5 @@ void processInput(char userInput[], size_t length){
     if (tokens[0] == NULL) {
         return; 
     }
-    executeCommand(tokens, 1);
+    executeCommand(tokens);
 } 

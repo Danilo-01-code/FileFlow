@@ -1,30 +1,42 @@
 # Queue
-// TODO
-the queue function works like the pipe on bash this is the flow that occurs:
 
-file|directory -> command1 -> out_command1
+the queue function works like the pipe on bash ,this is the flow of execution with queue command:
+
+file | directory -> command1 -> out_command1
 out_command1 -> command2 -> out_command2
             and so on...
 
+Usage:
 ```
 queue <file | directory> <command 1> <command 2> [...]
 ```
 
+Example:
+```
+  queue myfolder cmp mv dcmp
+```
+
 ## Internal logic
 
-On commands.c all last outputs are stored on the array 'last_outputs', the queue command uses it to operate many commands
+### commands.c
+
+All last outputs are stored on the char* array 'last_outputs', the queue command uses it to operate.
 ```C
 char *last_outputs[MAX_OUTPUTS];
 ```
 
+Outputs are committed to last outputs with this command:
 ```C
 void _handle_last_single_output(const char *filename);
 ```
 
+the queue manages the outputs, and use them as input to the other functions on the queue
 ```C
-void _handle_last_single_output(const char *filename);
+void handle_queue(char **args, int argc);
 ```
+### tokenizer.c
 
+all the commands on FileFlow are executed on 'executeCommand', the queue calls this function to execute many commands
 ```C
-void handle_queue(char **args, int argc)
+void executeCommand(char** tokens);
 ```
