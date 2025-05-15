@@ -8,6 +8,7 @@
 #include <minizip/unzip.h>
 #include <sys/types.h>  
 #include <sys/wait.h>    
+#include <time.h>
 
 #include "../includes/defs.h"
 #include "tokenizer.h"
@@ -65,7 +66,31 @@ void handle_help(char **args, int argc){
 }
 
 void handle_unknown(char *arg){
-    printf("%s:" RED " command not found" RESET ", digit help to see the commands\n", arg);
+    srand(time(NULL));
+
+    const char* sentences[] = {
+        "I cannot recognize this: '%s'\n",
+        "I am composed of more than 2000 lines of C code, but i cannot recognize this: '%s'\n",
+        "I'm not enough advanced to recognize whatever it is: '%s' means\n",
+        "I have no clue of what is an '%s'\n",
+        "What a hell is an '%s' ?\n",
+        "Bro, just tell me '%s' and hope I understand\n",
+        "I cannot help you with: %s\n",
+        "I ran your input through 1000000 neural networks and still don't know what '%s' is\n",
+        "'%s'? Sounds like something my compiler would reject too\n",
+        "Are you sure '%s' isn't a Pokémon?\n",
+        "Well, '%s' isn't in my vocabulary, and I'm offended\n",
+        "I looked up '%s' in all my functions... still no clue what this supposed to mean\n",
+        "I'm smart, but not '%s'-level smart\n",
+        "Analyzing... Analyzing... Still don't know what '%s' means\n",
+        "I'm fluent in C, sarcasm, and confusion. '%s' fits the last category.\n",
+        "You should try to asks for '%s' to chatgpt\n",
+    };
+    
+    int n = sizeof(sentences) / sizeof(sentences[0]);
+    int index = rand() % n;
+
+    printf(sentences[index], arg);
 }
 
 void handle_bye(char **args, int argc){
@@ -747,10 +772,15 @@ void handle_find(char **args, int argc){
                     printf("%c", row[i]);
                 }
             }
+        }     
+
+        if (row[strlen(row) -1] != '\n'){
+            printf("\n");
         }
+
         n_row++;
     }
-    printf("\n");
+
     fclose(file_open);
     _handle_last_single_output(file);
 }
@@ -781,10 +811,13 @@ void handle_read(char **args, int argc){
 
     while (fgets(row, sizeof(row), file_open)) {
         printf(BBLUE "[%d] " RESET "%s", n_row, row);
+
+        if (row[strlen(row) -1] != '\n'){
+            printf("\n");
+        }
         n_row++;
     }
 
-    printf("\n");
     fclose(file_open);
     _handle_last_single_output(file);
     free(file);

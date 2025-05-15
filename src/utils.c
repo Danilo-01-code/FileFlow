@@ -80,6 +80,8 @@ char **split(char *sentence, size_t token_len) {
         }
     }
 
+    tokens[token_idx] = NULL;
+
     return tokens;
 }
 

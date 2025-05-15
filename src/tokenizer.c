@@ -53,6 +53,7 @@ void executeCommand(char** tokens){
             break;
         }
     }
+
     if (!found) {
         handle_unknown(tokens[0]);
     }
@@ -63,8 +64,9 @@ void executeCommand(char** tokens){
 void processInput(char userInput[], size_t length){
     char **tokens = split(userInput, length);
 
-    if (tokens[0] == NULL) {
+    if (tokens == NULL) {
         return; 
     }
+
     executeCommand(tokens);
 } 
