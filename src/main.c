@@ -49,7 +49,7 @@ int main(void){
         return 1;  
     }
 
-
+    system(CLEAR);
 
     if (welcomeEveryRun()){   
         showWelcome();
@@ -78,9 +78,9 @@ int main(void){
     
         if (*userInput) {
             add_history(userInput);
-            size_t length = count_words(userInput);
-            if (length > 0) {
-                processInput(userInput, length);
+            size_t length_tokens = count_tokens(userInput);
+            if (length_tokens > 0) {
+                processInput(userInput, length_tokens);
             }
         }
         free(userInput);

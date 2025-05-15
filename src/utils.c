@@ -16,28 +16,76 @@ void ensure_config_dir_exists(const char *path) {
     MKDIR(dir_path); 
 }
 
-char **split(char *sentence, size_t wordLen){ 
+/*
+*  split
+*  one fundamental function on the system, transform the user input (char * sentece)
+*  on an array of char* (char** dtype) each char* on this array is treated as an arg
+*  on commands.c, if the char *sentece has quotes sentences inside it, them the system
+*  assumes that all the words on quotes as one single token.
+*  examples:
+*  [ IN  ] char* sentence =  "command 'hello world again'";
+*  [ OUT ] char **tokens  = {"command", "hello world again"};
+*  [ IN  ] char *sentence =  "command hello world again";
+*  [ OUT ] char **tokens  = {"command","hello","world","again"};
+*
+*/
+
+char **split(char *sentence, size_t token_len) {
     size_t totalLen = strlen(sentence);
     if (totalLen > 0 && sentence[totalLen - 1] == '\n') {
         sentence[totalLen - 1] = '\0';
     }
 
-    // This function considers that the sentence arg is a mutable string, like: char sentence[]
-    char **tokens = malloc((wordLen+1) * sizeof(char*));
-    int token_idx = 0;
-    char *token = strtok(sentence, " ");
-    
-    while (token != NULL){    
-        tokens[token_idx++] = strdup(token);
-        token = strtok(NULL," ");
+    char **tokens  = malloc((token_len + 1) * sizeof(char *));
+    char *start    = NULL;
+    char *end      = NULL;
+    int  token_idx = 0;
+    int  i         = 0;
+
+    while (sentence[i] != '\0') {
+        while (isspace(sentence[i])) i++;
+
+        if (sentence[i] == '\'' || sentence[i] == '"') {
+            // an entire on quotes are recognized as an single token
+            char quote_char = sentence[i++];
+            start = &sentence[i];
+
+            while (sentence[i] != '\0' && sentence[i] != quote_char) {
+                // takes all the sentence between the quotes
+                i++;
+            }
+
+            end = &sentence[i]; 
+
+            size_t len  = end - start;
+            char *token = malloc(len + 1);
+            strncpy(token, start, len);
+            token[len]  = '\0';
+            tokens[token_idx++] = token;
+
+            if (sentence[i] != '\0') i++; 
+        } else {
+            start = &sentence[i];
+            while (sentence[i] != '\0' && !isspace(sentence[i])) {
+                i++;
+            }
+
+            end = &sentence[i];
+
+            size_t len = end - start;
+            char *token = malloc(len + 1);
+            strncpy(token, start, len);
+            token[len] = '\0';
+            tokens[token_idx++] = token;
+        }
     }
 
-    tokens[token_idx] = NULL; // Terminator
     return tokens;
 }
 
-size_t count_words(char *sentence){ 
+size_t count_tokens(char *sentence){ 
     int idx = 0;
+
     while (sentence[idx] == ' '){   
         idx++;
     }
@@ -45,13 +93,37 @@ size_t count_words(char *sentence){
     if (strlen(sentence) == 0){ 
         return 0;
     }
-    size_t res = 1;
-    int len = strlen(sentence);
 
-    for (idx; idx < len; idx++){   
-        if (sentence[idx] == ' ' && idx < len - 1 && sentence[idx+1] != ' '){    
-            res++;
+    size_t res = 0;
+    int len = strlen(sentence);
+    int quote = 0;  
+    char quote_char = '\0';
+    int in_token = 0;
+
+    for (idx; idx < len; idx++) {
+        char c = sentence[idx];
+
+        if ((c == '"' || c == '\'') && quote == 0) {
+            quote = 1;
+            quote_char = c;
+            in_token = 1;
         }
+        else if (quote == 1 && c == quote_char) {
+            quote = 0;
+        }
+        else if (quote == 0 && isspace(c)) {
+            if (in_token) {
+                res++;
+                in_token = 0;
+            }
+        }
+        else {
+            in_token = 1;
+        }
+    }
+
+    if (in_token) {
+        res++;
     }
     return res;
 }

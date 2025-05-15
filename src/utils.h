@@ -6,8 +6,8 @@ extern char *userInput;
 
 void ensure_config_dir_exists(const char *path);
 char *ensure_zip_extension(const char *filename);
-char **split(char *word, size_t wordLen);
-size_t count_words(char *sentence);
+char **split(char *word, size_t token_len);
+size_t count_tokens(char *sentence);
 int count_args(char **args);
 int dir_exists(const char *path);
 int create_dir(const char *path);
