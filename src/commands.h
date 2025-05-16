@@ -31,5 +31,6 @@ void _handle_remove_all(char *path);
 void handle_find(char** argds, int argc);
 void handle_read(char **args, int argc);
 void handle_write(char **args, int argc);
+void handle_rename_username(char **args, int argc);
 
 #endif 

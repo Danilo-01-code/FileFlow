@@ -34,6 +34,7 @@ Command commands[] = {
     { "find",    handle_find             },
     { "read",    handle_read             },
     { "write",   handle_write            },
+    { "rename",  handle_rename_username  },
     {NULL, NULL} 
 };
 

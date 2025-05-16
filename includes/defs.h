@@ -14,6 +14,6 @@
 
 #define VERSION 1.0
 #define ABS_PATH_MAX 4096 // arbitrary value for compatibility
-#define MAX_OUTPUTS 128
+#define MAX_OUTPUTS 16
 
 #endif

@@ -15,7 +15,8 @@
 #include "hostNameUtils.h"
 #include "utils.h"
 
-char *last_outputs[MAX_OUTPUTS];
+char        *last_outputs[MAX_OUTPUTS];
+extern char username[100];
 
 void _handle_last_single_output(const char *filename) {
     for (int i = 0; i < MAX_OUTPUTS; i++) {
@@ -35,7 +36,7 @@ void _handle_too_many_args(char **args, int argc){
 }
 
 void handle_help(char **args, int argc){
-    if (argc != 0){ 
+    if (argc > 1){ 
         _handle_too_many_args(args,argc);
         return;
     }
@@ -62,6 +63,7 @@ void handle_help(char **args, int argc){
         "  exit                Exit the system\n"
         "  welcome             Change the welcome config\n"
         "  cd                  Change directory\n"
+        "  rename              Change your username"
         "  ls [path]           List all directories and files on a given path, if has no parameter them list from the current path\n\n");
 }
 
@@ -94,7 +96,7 @@ void handle_unknown(char *arg){
 }
 
 void handle_bye(char **args, int argc){
-    if (argc != 0){ 
+    if (argc > 1){ 
         _handle_too_many_args(args,argc);
         return;
     }
@@ -333,7 +335,7 @@ void handle_decompress(char **args, int argc){
 
 
 void handle_version(char **args, int argc){ 
-    if (argc != 0){ 
+    if (argc > 1){ 
         _handle_too_many_args(args,argc);
         return;
     }
@@ -341,7 +343,7 @@ void handle_version(char **args, int argc){
 }
 
 void handle_clear(char **args, int argc){
-    if (argc != 0){ 
+    if (argc > 1){ 
         _handle_too_many_args(args,argc);
         return;
     }
@@ -349,7 +351,7 @@ void handle_clear(char **args, int argc){
 }
 
 void handle_curr_directory(char **args, int argc){
-    if (argc != 0){ 
+    if (argc > 1){ 
         _handle_too_many_args(args,argc);
         return;
     }  
@@ -358,7 +360,7 @@ void handle_curr_directory(char **args, int argc){
 }
 
 void handle_architecture(char **args,int argc){ 
-    if (argc != 0){ 
+    if (argc > 1){ 
         _handle_too_many_args(args,argc);
         return;
     }
@@ -366,7 +368,7 @@ void handle_architecture(char **args,int argc){
 }
 
 void handle_name(char **args, int argc){  
-    if (argc != 0){ 
+    if (argc > 1){ 
         _handle_too_many_args(args,argc);
         return;
     }  
@@ -374,7 +376,7 @@ void handle_name(char **args, int argc){
 }
 
 void handle_welcome(char **args, int argc){
-    if (argc != 0){ 
+    if (argc > 1){ 
         _handle_too_many_args(args,argc);
         return;
     }  
@@ -570,7 +572,6 @@ void handle_make(char **args, int argc){
 }   
 
 void _handle_remove_all(char *path){
-
     struct stat path_stat;
     int    emptyContent = 0;
 
@@ -742,7 +743,7 @@ void handle_rename(char **args, int argc){
 }
 
 void handle_find(char **args, int argc){ 
-    if (argc !=2){  
+    if (argc != 2){  
         printf("Usage: find <file> <word>\n");
         return;
     }
@@ -868,4 +869,33 @@ void handle_write(char **args, int argc){
     fclose(file_open);
     free(file);
     _handle_last_single_output(file);
+}
+
+void handle_rename_username(char **args, int argc){
+    if (argc > 1){
+        _handle_too_many_args(args, argc);
+        return;
+    }
+
+    char path[512];
+    get_config_path(path, sizeof(path));
+
+    printf("Select your new Username: ");
+
+    if (fgets(username, sizeof(username), stdin) == NULL) {
+        fprintf(stderr, RED "Cannot read input.\n" RESET);
+        return; 
+    }
+
+    username[strcspn(username, "\n")] = '\0';
+    FILE *file = fopen(path, "w");
+
+    if (!file) {
+        perror(RED "Cannot open config file\n" RESET);
+        return;
+    }
+
+    fprintf(file, "%s\n", username);
+    fclose(file);
+    printf("Your new username is: %s\n", username);
 }
